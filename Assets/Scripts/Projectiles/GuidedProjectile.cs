@@ -1,16 +1,33 @@
 ﻿using UnityEngine;
 
-public class GuidedProjectile : Projectile 
+public class GuidedProjectile : Projectile,IPooledObject
 {
 	private Vector3 m_targetPosition;
+	private ObjectType m_objectType = ObjectType.GUIDEDPROJ;
 
-	private void Update()
+    public ObjectType Type => m_objectType;
+
+    private void FixedUpdate()
 	{
 		if (m_targetPosition == null)
-			Destroy(gameObject);
+			DisableProjectile();
 
 		if (m_targetPosition != null)
 			Movement();
+	}
+	private void OnTriggerEnter(Collider other)
+	{
+		var monster = other.GetComponent<Monster>();
+
+		if (monster != null)
+		{
+			monster.TakeDamage(m_damage);
+			DisableProjectile();			
+		}
+		else
+		{
+			DisableProjectile();
+		}
 	}
 
 	public override void SetTarget(Vector3 target)
@@ -29,14 +46,8 @@ public class GuidedProjectile : Projectile
 		transform.Translate(translation);
 	}
 
-	private void OnTriggerEnter(Collider other) 
-	{
-		var monster = other.GetComponent<Monster>();
-
-		if (monster == null)
-			return;
-
-		monster.TakeDamage(m_damage);
-		Destroy(this.gameObject);
+	public override void DisableProjectile()
+    {
+		ObjectPool.SharedInstance.DestroyObject(gameObject);
 	}
 }

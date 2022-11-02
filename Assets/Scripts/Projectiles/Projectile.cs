@@ -9,4 +9,5 @@ public abstract class Projectile : MonoBehaviour
   
     public abstract void Movement();
     public abstract void SetTarget(Vector3 target);
+    public abstract void DisableProjectile();
 }

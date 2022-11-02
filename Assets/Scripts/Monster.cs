@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 
-public class Monster : MonoBehaviour 
+public class Monster : MonoBehaviour,IPooledObject
 {
-	private Action OnCheckDeath;
 	private const float m_reachDistance = 0.3f;
 
 	[SerializeField] private float m_speed = 0.1f;
@@ -12,24 +12,25 @@ public class Monster : MonoBehaviour
 
 	private GameObject m_moveTarget;
 	private Vector3 m_lastPosition;
+	private ObjectType m_type = ObjectType.MONSTER;
 	
 	private int m_hp;
 
     public Vector3 Velocity { get; set; }
 
-	private void Start() 
+    public ObjectType Type => m_type;
+
+    private void Start() 
 	{
 		m_hp = m_maxHP;
-		OnCheckDeath += Death;
-
-		StartCoroutine(CalculateVelocity());
 	}
 
-	private void Update () 
+	private void FixedUpdate () 
 	{
         if (m_moveTarget == null)
             return;
 
+		CalculateVelocity();
         Movement();
 		DisableMonster();        
     }
@@ -48,7 +49,7 @@ public class Monster : MonoBehaviour
 
 		if (reach)
         {
-			Destroy(gameObject);
+			ObjectPool.SharedInstance.DestroyObject(gameObject);
 			return;
         }		
     }
@@ -58,22 +59,17 @@ public class Monster : MonoBehaviour
 		m_moveTarget = target;		
 	}
 
-	private IEnumerator CalculateVelocity()
-	{
-        while (true)
-        {
-			m_lastPosition = transform.position;
+	private void CalculateVelocity()
+	{	
+		Velocity = (transform.position - m_lastPosition) / Time.deltaTime;
 
-			yield return new WaitForFixedUpdate();
-
-			Velocity = (transform.position - m_lastPosition) / Time.deltaTime;
-		}	
+		m_lastPosition = transform.position;
 	}
 
 	public void TakeDamage(int damage)
     {
 		m_hp -= damage;
-		OnCheckDeath?.Invoke();
+		Death();
     }
 
 	private void Death()
@@ -82,10 +78,5 @@ public class Monster : MonoBehaviour
         {
 			Destroy(gameObject);
         }
-    }
-
-    private void OnDisable()
-    {
-		OnCheckDeath -= Death;
     }
 }

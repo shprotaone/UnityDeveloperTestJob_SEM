@@ -25,7 +25,9 @@ public class Spawner : MonoBehaviour
 
 	private void CreateMonster()
     {
-		GameObject monster = Instantiate(m_monsterPrefab, this.transform);
+        GameObject monster = ObjectPool.SharedInstance.GetObject(ObjectType.MONSTER);
+        monster.transform.position = transform.position;
+        monster.SetActive(true);
 		monster.GetComponent<Monster>().SetMoveTarget(m_moveTarget.gameObject);
     }
 }
